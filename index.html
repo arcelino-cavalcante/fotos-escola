@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafio Fotográfico</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Nothing+You+Could+Do&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #111827;
+        }
+
+        .handwritten {
+            font-family: 'Nothing You Could Do', cursive;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        @keyframes flash {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .camera-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 50;
+            pointer-events: none;
+            animation: flash 0.3s ease-out forwards;
+        }
+
+        @keyframes countdown-pulse {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
+        }
+
+        .count-number {
+            animation: countdown-pulse 0.9s infinite;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 min-h-screen flex flex-col items-center justify-center p-4 text-white">
+
+    <div id="flash-overlay" class="hidden"></div>
+
+    <div class="w-full max-w-md mx-auto relative">
+        <!-- LOGO -->
+        <div class="text-center mb-6 animate-fade-in">
+            <div
+                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400 text-purple-900 mb-3 shadow-lg border-4 border-white">
+                <i class="fas fa-camera text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-wider">MOMENTOS <span class="text-yellow-400">ESCOLA</span></h1>
+            <p class="text-sm text-yellow-400 font-bold uppercase tracking-widest mt-1">Família Eliel 2025</p>
+        </div>
+
+        <!-- TELA 1: INTRO -->
+        <div id="screen-intro"
+            class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center border border-white/20 shadow-2xl">
+            <h2 class="text-xl font-bold mb-4">Pronto para o desafio?</h2>
+            <p class="text-gray-300 mb-8 text-sm leading-relaxed">
+                Sua foto aparecerá automaticamente no <strong>Telão do Evento</strong>!
+            </p>
+            <button onclick="startChallenge()"
+                class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 hover:shadow-yellow-400/50 flex items-center justify-center gap-2">
+                <i class="fas fa-dice"></i> SORTEAR MISSÃO
+            </button>
+
+            <!-- Recent Gallery Preview -->
+            <div class="mt-8">
+                <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest">Últimos Momentos</p>
+                <div id="recent-gallery" class="flex gap-2 overflow-x-auto pb-2 snap-x">
+                    <!-- Gallery Items injected here -->
+                    <div
+                        class="w-16 h-16 bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-xs text-gray-500">
+                        ...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 2: MISSÃO -->
+        <div id="screen-mission"
+            class="hidden bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center border border-white/20 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500">
+            </div>
+            <span class="text-xs font-bold text-yellow-400 uppercase tracking-widest">Sua Missão:</span>
+            <h3 id="mission-text"
+                class="text-2xl md:text-3xl font-extrabold my-8 text-white leading-tight filter drop-shadow-lg"></h3>
+            <button onclick="openCamera()"
+                class="w-full bg-white text-indigo-900 font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 hover:bg-gray-100 flex items-center justify-center gap-2">
+                <i class="fas fa-camera-retro"></i> ABRIR CÂMERA
+            </button>
+            <button onclick="startChallenge()" class="mt-4 text-sm text-gray-400 underline hover:text-white">Trocar
+                Missão</button>
+        </div>
+
+        <!-- TELA 3: CÂMERA -->
+        <div id="screen-camera"
+            class="hidden relative w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-black">
+            <video id="video" autoplay playsinline class="w-full h-[65vh] object-cover transform scale-x-[-1]"></video>
+
+
+
+            <div id="countdown-overlay"
+                class="hidden absolute inset-0 flex items-center justify-center bg-black/40 z-20">
+                <span id="countdown-text" class="text-9xl font-bold text-white drop-shadow-lg count-number">3</span>
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end pb-8 z-10">
+
+
+                <button onclick="startCountdown()"
+                    class="w-20 h-20 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                    <div class="w-16 h-16 rounded-full bg-white border-2 border-black"></div>
+                </button>
+
+                <button onclick="switchCamera()"
+                    class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <button onclick="closeCamera()"
+                class="absolute top-4 right-4 text-white bg-black/50 w-10 h-10 rounded-full backdrop-blur-sm z-30"><i
+                    class="fas fa-times"></i></button>
+        </div>
+
+        <!-- TELA 4: RESULTADO -->
+        <div id="screen-result" class="hidden flex flex-col items-center w-full">
+            <p id="upload-status" class="text-green-400 font-bold mb-4 flex items-center gap-2 animate-bounce">
+                <i class="fas fa-check-circle"></i> Enviando para o telão...
+            </p>
+
+            <div class="flex gap-2 mb-4">
+                <button onclick="applyFilter('normal')"
+                    class="px-3 py-1 text-xs rounded-full bg-white text-gray-800 font-bold border hover:bg-gray-200">Normal</button>
+                <button onclick="applyFilter('grayscale')"
+                    class="px-3 py-1 text-xs rounded-full bg-gray-600 text-white font-bold border hover:bg-gray-700">P&B</button>
+                <button onclick="applyFilter('sepia')"
+                    class="px-3 py-1 text-xs rounded-full bg-yellow-700 text-white font-bold border hover:bg-yellow-800">Sépia</button>
+            </div>
+
+            <canvas id="photoCanvas" class="hidden"></canvas>
+            <canvas id="uploadCanvas" class="hidden"></canvas> <!-- Canvas menor para upload -->
+
+            <img id="finalImage"
+                class="w-full max-w-sm rounded shadow-2xl rotate-1 transform transition hover:rotate-0 duration-300 border-8 border-white"
+                alt="Sua foto">
+
+            <div class="grid grid-cols-2 gap-4 w-full mt-6">
+                <button onclick="downloadImage()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg">
+                    <i class="fas fa-download"></i> Baixar
+                </button>
+                <button onclick="shareImage()"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg">
+                    <i class="fab fa-whatsapp"></i> Enviar
+                </button>
+            </div>
+            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white flex items-center gap-2 text-sm"><i
+                    class="fas fa-redo"></i> Nova Missão</button>
+        </div>
+    </div>
+
+    <!-- Firebase Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBIxNGXEYA4AU8Kl3ktCO4mZ3dC4zxkU1s",
+            authDomain: "formes-993cb.firebaseapp.com",
+            projectId: "formes-993cb",
+            storageBucket: "formes-993cb.firebasestorage.app",
+            messagingSenderId: "68887552550",
+            appId: "1:68887552550:web:efb79cce5416cb758f3ce7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Tornar funções acessíveis globalmente
+        window.saveToFirestore = async (base64Image, missionText) => {
+            const statusEl = document.getElementById('upload-status');
+            try {
+                if (!auth.currentUser) await signInAnonymously(auth);
+
+                await addDoc(collection(db, "school_gallery"), {
+                    image: base64Image,
+                    mission: missionText,
+                    timestamp: serverTimestamp()
+                });
+
+                statusEl.innerHTML = '<i class="fas fa-check-double"></i> Sucesso! Está no telão.';
+            } catch (error) {
+                console.error("Erro upload", error);
+                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Salvo apenas no celular.';
+            }
+        };
+
+        // Load Recent Gallery
+        const q = query(collection(db, "school_gallery"), orderBy("timestamp", "desc"), limit(10));
+        onSnapshot(q, (snapshot) => {
+            const galleryEl = document.getElementById('recent-gallery');
+            galleryEl.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const img = document.createElement('img');
+                img.src = data.image;
+                img.className = 'w-16 h-16 rounded-lg object-cover border border-white/20 flex-shrink-0';
+                galleryEl.appendChild(img);
+            });
+        });
+    </script>
+
+    <script>
+        // --- DADOS E FUNÇÕES DE UI ---
+        const missoes = [
+            "Fazendo careta", "Abraçando alguém bonito(a)", "Com a gestão", "Com a coordenação", "Com algum funcionário",
+            "Com uma pessoa legal", "Com alguém que sabe pedir", "Com alguém sério", "Com mais de 2 pessoas", "Fazendo cara de moral",
+            "Fazendo pose de modelo", "Sorrindo muito", "Sinal de paz e amor", "Foto pulando", "Mão no coração",
+            "Com seu melhor amigo(a)", "Apontando pro céu", "Imitando uma estátua", "Fazendo biquinho", "Com alguém de óculos",
+            "Com alguém mais alto", "Com alguém mais baixo", "Coração com as mãos", "Com a turma toda", "Selfie estilosa",
+            "Com cara de surpresa", "Mostrando a língua", "De costas", "Com alguém que admira", "Dando um toca aqui",
+            "Fazendo chifrinho", "Com cara de pensativo", "Segurando algo escolar", "Com alguém rindo", "Fazendo careta feia",
+            "Com cara de sono", "Comemorando muito", "Com outra turma", "Fazendo joinha", "Foto espontânea"
+        ];
+        let currentMission = "", videoStream = null, currentFacingMode = 'user', capturedImageBitmap = null, currentFilter = 'normal';
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(f = 800, d = 0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination);
+            o.start(); g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
+        }
+        function playShutter() { playBeep(100, 0.05); }
+
+        function showScreen(id) { ['screen-intro', 'screen-mission', 'screen-camera', 'screen-result'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+        function startChallenge() { currentMission = missoes[Math.floor(Math.random() * missoes.length)]; document.getElementById('mission-text').innerText = `"${currentMission}"`; showScreen('screen-mission'); }
+
+        async function openCamera() {
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 1280 } } });
+                const video = document.getElementById('video');
+                video.srcObject = videoStream;
+                video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+                showScreen('screen-camera');
+            } catch (e) { alert("Erro câmera: " + e.message); }
+        }
+        function switchCamera() { currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; openCamera(); }
+        function closeCamera() { if (videoStream) videoStream.getTracks().forEach(t => t.stop()); showScreen('screen-mission'); }
+
+
+
+        function startCountdown() {
+            document.getElementById('countdown-overlay').classList.remove('hidden');
+            let c = 3; document.getElementById('countdown-text').innerText = c; playBeep(600);
+            const t = setInterval(() => { c--; if (c > 0) { document.getElementById('countdown-text').innerText = c; playBeep(600); } else { clearInterval(t); document.getElementById('countdown-overlay').classList.add('hidden'); takePhoto(); } }, 1000);
+        }
+
+        async function takePhoto() {
+            playShutter();
+            const video = document.getElementById('video');
+            const cvs = document.createElement('canvas');
+            cvs.width = video.videoWidth; cvs.height = video.videoHeight;
+            const ctx = cvs.getContext('2d');
+            if (currentFacingMode === 'user') { ctx.translate(cvs.width, 0); ctx.scale(-1, 1); }
+            ctx.drawImage(video, 0, 0);
+
+
+
+            capturedImageBitmap = cvs;
+            renderFinalImage();
+            closeCamera();
+            showScreen('screen-result');
+        }
+
+        function applyFilter(f) { currentFilter = f; renderFinalImage(); }
+
+        function renderFinalImage() {
+            if (!capturedImageBitmap) return;
+            const canvas = document.getElementById('photoCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Configuração: Apenas a Moldura (Polaroid Style)
+            const width = 1080;
+            const bottomSpace = 400; // Reduzi para ficar mais quadrado (antes era 600)
+            const height = width + bottomSpace;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // 1. FUNDO BRANCO (O próprio Card)
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. A FOTO (Com margem MÍNIMA)
+            const margin = 30;
+            const photoSize = width - (margin * 2);
+            const photoX = margin;
+            const photoY = margin;
+
+            // Crop Quadrado da Imagem Original
+            const srcW = capturedImageBitmap.width;
+            const srcH = capturedImageBitmap.height;
+            const minDim = Math.min(srcW, srcH);
+            const sx = (srcW - minDim) / 2;
+            const sy = (srcH - minDim) / 2;
+
+            ctx.save();
+            // Filtros
+            if (currentFilter === 'grayscale') ctx.filter = 'grayscale(1)';
+            else if (currentFilter === 'sepia') ctx.filter = 'sepia(0.8)';
+
+            // Desenha a foto
+            ctx.drawImage(capturedImageBitmap, sx, sy, minDim, minDim, photoX, photoY, photoSize, photoSize);
+
+            // Borda fina na foto para acabamento
+            ctx.strokeStyle = "#e5e7eb"; // Cinza bem claro
+            ctx.lineWidth = 2;
+            ctx.strokeRect(photoX, photoY, photoSize, photoSize);
+            ctx.restore();
+
+            // 3. TIPOGRAFIA E BRANDING
+            const textCenter = width / 2;
+            const textBaseY = photoY + photoSize + 60; // Texto começa logo abaixo da foto
+
+            // Título da Missão
+            ctx.fillStyle = "#111827"; // Cinza escuro
+            ctx.font = "bold 48px 'Montserrat'";
+            ctx.textAlign = "center";
+
+            // Quebra de linha se necessário
+            const missionWords = currentMission.toUpperCase().split(' ');
+            let line1 = "";
+            let line2 = "";
+
+            if (missionWords.length > 3) {
+                const mid = Math.ceil(missionWords.length / 2);
+                line1 = missionWords.slice(0, mid).join(' ');
+                line2 = missionWords.slice(mid).join(' ');
+                ctx.fillText(line1, textCenter, textBaseY);
+                ctx.fillText(line2, textCenter, textBaseY + 55);
+            } else {
+                ctx.fillText(currentMission.toUpperCase(), textCenter, textBaseY + 25);
+            }
+
+            // Divisor
+            ctx.strokeStyle = "#FACC15"; // Amarelo Brand
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(textCenter - 60, textBaseY + 100);
+            ctx.lineTo(textCenter + 60, textBaseY + 100);
+            ctx.stroke();
+
+            // Branding Família Eliel
+            ctx.fillStyle = "#1f2937";
+            ctx.font = "bold 40px 'Montserrat'";
+            ctx.fillText("FAMÍLIA ELIEL 2025", textCenter, textBaseY + 170);
+
+            // Data
+            ctx.fillStyle = "#9ca3af";
+            ctx.font = "28px 'Montserrat'";
+            ctx.fillText(new Date().toLocaleDateString('pt-BR'), textCenter, textBaseY + 220);
+
+            // Atualiza UI
+            const finalData = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('finalImage').src = finalData;
+
+            // --- OTIMIZAÇÃO E UPLOAD AUTOMÁTICO ---
+            const upCanvas = document.getElementById('uploadCanvas');
+            const scale = 600 / canvas.width;
+            upCanvas.width = 600;
+            upCanvas.height = canvas.height * scale;
+            const upCtx = upCanvas.getContext('2d');
+            upCtx.drawImage(canvas, 0, 0, upCanvas.width, upCanvas.height);
+            const lowResData = upCanvas.toDataURL('image/jpeg', 0.7);
+
+            if (window.saveToFirestore) {
+                window.saveToFirestore(lowResData, currentMission);
+            }
+        }
+
+        // Helper para retângulo arredondado
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function downloadImage() {
+            const a = document.createElement('a'); a.download = `momento-${Date.now()}.jpg`; a.href = document.getElementById('finalImage').src; a.click();
+        }
+        function shareImage() {
+            alert("Use o botão baixar e compartilhe manualmente!");
+        }
+        function resetApp() { showScreen('screen-intro'); }
+    </script>
+</body>
+
+</html>

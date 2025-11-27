@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Momentos Escola</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- JSZip for zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver for saving the zip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Painel do Organizador</h1>
+                <p class="text-gray-500">Gerencie e baixe as fotos do evento</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="downloadAll()" id="btn-download"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition">
+                    <i class="fas fa-file-archive"></i> Baixar Tudo (.ZIP)
+                </button>
+                <button onclick="deleteAllPhotos()" id="btn-delete-all"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition">
+                    <i class="fas fa-trash"></i> Excluir Tudo
+                </button>
+                <a href="slideshow.html" target="_blank"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transition">
+                    <i class="fas fa-tv"></i> Abrir Telão
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-gray-500 text-xs font-bold uppercase">Total de Fotos</h3>
+                <p id="total-count" class="text-4xl font-bold text-gray-800 mt-2">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-gray-500 text-xs font-bold uppercase">Meta do Evento</h3>
+                <div class="flex items-center gap-2 mt-2">
+                    <input type="number" id="goal-input" value="200"
+                        class="w-20 border rounded p-1 text-xl font-bold text-center">
+                    <button onclick="saveGoal()" class="bg-blue-600 text-white rounded p-2 hover:bg-blue-700"><i
+                            class="fas fa-save"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Photos will be injected here -->
+            <div class="animate-pulse bg-gray-300 h-48 rounded-lg"></div>
+            <div class="animate-pulse bg-gray-300 h-48 rounded-lg"></div>
+            <div class="animate-pulse bg-gray-300 h-48 rounded-lg"></div>
+        </div>
+    </div>
+
+    <!-- Firebase Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBIxNGXEYA4AU8Kl3ktCO4mZ3dC4zxkU1s",
+            authDomain: "formes-993cb.firebaseapp.com",
+            projectId: "formes-993cb",
+            storageBucket: "formes-993cb.firebasestorage.app",
+            messagingSenderId: "68887552550",
+            appId: "1:68887552550:web:efb79cce5416cb758f3ce7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let allPhotos = [];
+
+        // Listen for all photos
+        const q = query(collection(db, "school_gallery"), orderBy("timestamp", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            const grid = document.getElementById('gallery-grid');
+            const countEl = document.getElementById('total-count');
+
+            grid.innerHTML = '';
+            allPhotos = [];
+            countEl.innerText = snapshot.size;
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const photo = { id: docSnap.id, ...data };
+                allPhotos.push(photo);
+
+                const card = document.createElement('div');
+                card.className = "relative group aspect-square bg-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition";
+
+                const img = document.createElement('img');
+                img.src = data.image;
+                img.className = "w-full h-full object-cover";
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700";
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.onclick = () => deletePhoto(docSnap.id);
+
+                const info = document.createElement('div');
+                info.className = "absolute bottom-0 left-0 w-full bg-black/60 text-white text-[10px] p-2 opacity-0 group-hover:opacity-100 transition truncate";
+                info.innerText = data.mission || "Sem missão";
+
+                card.appendChild(img);
+                card.appendChild(deleteBtn);
+                card.appendChild(info);
+                grid.appendChild(card);
+            });
+        });
+
+        // Load Goal
+        const configRef = doc(db, "config", "main");
+        getDoc(configRef).then(snap => {
+            if (snap.exists()) {
+                document.getElementById('goal-input').value = snap.data().goal || 200;
+            }
+        });
+
+        window.saveGoal = async () => {
+            const val = parseInt(document.getElementById('goal-input').value);
+            if (val > 0) {
+                await setDoc(configRef, { goal: val }, { merge: true });
+                alert("Meta atualizada!");
+            }
+        };
+
+
+
+        window.deletePhoto = async (id) => {
+            if (confirm('Tem certeza que deseja excluir esta foto? Ela sumirá do telão também.')) {
+                try {
+                    await deleteDoc(doc(db, "school_gallery", id));
+                } catch (e) {
+                    alert("Erro ao excluir: " + e.message);
+                }
+            }
+        };
+
+        window.downloadAll = async () => {
+            if (allPhotos.length === 0) {
+                alert("Nenhuma foto para baixar.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-download');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Compactando...';
+            btn.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                const folder = zip.folder("momentos-escola");
+
+                allPhotos.forEach((photo, index) => {
+                    // Remove header from base64 string
+                    const base64Data = photo.image.split(',')[1];
+                    const fileName = `foto_${index + 1}_${photo.mission.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.jpg`;
+                    folder.file(fileName, base64Data, { base64: true });
+                });
+
+                const content = await zip.generateAsync({ type: "blob" });
+                saveAs(content, "momentos-escola-completo.zip");
+
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao criar ZIP: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        window.deleteAllPhotos = async () => {
+            if (allPhotos.length === 0) {
+                alert("Não há fotos para excluir.");
+                return;
+            }
+
+            if (!confirm("ATENÇÃO: Você tem certeza que deseja EXCLUIR TODAS as fotos?\n\nEssa ação não pode ser desfeita!")) {
+                return;
+            }
+
+            if (!confirm("Confirmação final: Isso vai apagar PERMANENTEMENTE todas as fotos do evento.\n\nClique em OK para apagar tudo.")) {
+                return;
+            }
+
+            const btn = document.getElementById('btn-delete-all');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+            btn.disabled = true;
+
+            try {
+                // Delete in parallel
+                const deletePromises = allPhotos.map(photo => deleteDoc(doc(db, "school_gallery", photo.id)));
+                await Promise.all(deletePromises);
+                alert("Todas as fotos foram excluídas com sucesso.");
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao excluir fotos: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+
+</html>
