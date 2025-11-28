@@ -129,34 +129,53 @@
                 Missão</button>
         </div>
 
-        <!-- TELA 3: CÂMERA -->
-        <div id="screen-camera"
-            class="hidden relative w-full rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-black">
-            <video id="video" autoplay playsinline class="w-full h-[65vh] object-cover transform scale-x-[-1]"></video>
+        <!-- TELA 3: CÂMERA (Instagram Style) -->
+        <div id="screen-camera" class="hidden fixed inset-0 z-50 bg-black">
+            <!-- Video Fullscreen -->
+            <video id="video" autoplay playsinline
+                class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
 
+            <!-- Top Controls -->
+            <div
+                class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20 bg-gradient-to-b from-black/50 to-transparent">
+                <button onclick="closeCamera()" class="text-white text-2xl drop-shadow-lg p-2">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="flex gap-4">
+                    <!-- Flash placeholder or other top controls could go here -->
+                    <button class="text-white text-xl drop-shadow-lg p-2 opacity-50">
+                        <i class="fas fa-bolt"></i>
+                    </button>
+                </div>
+            </div>
 
-
+            <!-- Countdown Overlay -->
             <div id="countdown-overlay"
-                class="hidden absolute inset-0 flex items-center justify-center bg-black/40 z-20">
+                class="hidden absolute inset-0 flex items-center justify-center bg-black/40 z-30">
                 <span id="countdown-text" class="text-9xl font-bold text-white drop-shadow-lg count-number">3</span>
             </div>
+
+            <!-- Bottom Controls -->
             <div
-                class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end pb-8 z-10">
+                class="absolute bottom-0 left-0 w-full pb-12 pt-20 px-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20 flex justify-between items-center">
 
+                <!-- Gallery/Previous (Placeholder for balance) -->
+                <div class="w-12 h-12 rounded-lg bg-white/20 border border-white/30 overflow-hidden">
+                    <!-- Could show last photo here -->
+                </div>
 
+                <!-- Shutter Button -->
                 <button onclick="startCountdown()"
-                    class="w-20 h-20 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center shadow-lg active:scale-90 transition-transform">
-                    <div class="w-16 h-16 rounded-full bg-white border-2 border-black"></div>
+                    class="relative w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-90">
+                    <div class="w-16 h-16 rounded-full bg-white transition-all active:bg-gray-200"></div>
                 </button>
 
+                <!-- Switch Camera -->
                 <button onclick="switchCamera()"
-                    class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition">
+                    class="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-xl border border-white/20 active:bg-white/20 transition">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
-            <button onclick="closeCamera()"
-                class="absolute top-4 right-4 text-white bg-black/50 w-10 h-10 rounded-full backdrop-blur-sm z-30"><i
-                    class="fas fa-times"></i></button>
         </div>
 
         <!-- TELA 4: RESULTADO -->
@@ -320,87 +339,32 @@
             if (!capturedImageBitmap) return;
             const canvas = document.getElementById('photoCanvas');
             const ctx = canvas.getContext('2d');
+            const size = 1080; const bottom = 300;
+            canvas.width = size; canvas.height = size + bottom;
 
-            // Configuração: Apenas a Moldura (Polaroid Style)
-            const width = 1080;
-            const bottomSpace = 400; // Reduzi para ficar mais quadrado (antes era 600)
-            const height = width + bottomSpace;
+            // Fundo Branco
+            ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            canvas.width = width;
-            canvas.height = height;
-
-            // 1. FUNDO BRANCO (O próprio Card)
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, width, height);
-
-            // 2. A FOTO (Com margem MÍNIMA)
-            const margin = 30;
-            const photoSize = width - (margin * 2);
-            const photoX = margin;
-            const photoY = margin;
-
-            // Crop Quadrado da Imagem Original
-            const srcW = capturedImageBitmap.width;
-            const srcH = capturedImageBitmap.height;
-            const minDim = Math.min(srcW, srcH);
-            const sx = (srcW - minDim) / 2;
-            const sy = (srcH - minDim) / 2;
+            // Imagem
+            const m = 40; const pSize = size - m * 2;
+            const srcW = capturedImageBitmap.width, srcH = capturedImageBitmap.height;
+            const min = Math.min(srcW, srcH);
+            const sx = (srcW - min) / 2, sy = (srcH - min) / 2;
 
             ctx.save();
-            // Filtros
             if (currentFilter === 'grayscale') ctx.filter = 'grayscale(1)';
             else if (currentFilter === 'sepia') ctx.filter = 'sepia(0.8)';
-
-            // Desenha a foto
-            ctx.drawImage(capturedImageBitmap, sx, sy, minDim, minDim, photoX, photoY, photoSize, photoSize);
-
-            // Borda fina na foto para acabamento
-            ctx.strokeStyle = "#e5e7eb"; // Cinza bem claro
-            ctx.lineWidth = 2;
-            ctx.strokeRect(photoX, photoY, photoSize, photoSize);
+            ctx.drawImage(capturedImageBitmap, sx, sy, min, min, m, m, pSize, pSize);
             ctx.restore();
 
-            // 3. TIPOGRAFIA E BRANDING
-            const textCenter = width / 2;
-            const textBaseY = photoY + photoSize + 60; // Texto começa logo abaixo da foto
+            // Textos
+            ctx.fillStyle = "#1f2937"; ctx.font = "bold 36px 'Montserrat'"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(currentMission.toUpperCase(), size / 2, size + 60);
 
-            // Título da Missão
-            ctx.fillStyle = "#111827"; // Cinza escuro
-            ctx.font = "bold 48px 'Montserrat'";
-            ctx.textAlign = "center";
 
-            // Quebra de linha se necessário
-            const missionWords = currentMission.toUpperCase().split(' ');
-            let line1 = "";
-            let line2 = "";
 
-            if (missionWords.length > 3) {
-                const mid = Math.ceil(missionWords.length / 2);
-                line1 = missionWords.slice(0, mid).join(' ');
-                line2 = missionWords.slice(mid).join(' ');
-                ctx.fillText(line1, textCenter, textBaseY);
-                ctx.fillText(line2, textCenter, textBaseY + 55);
-            } else {
-                ctx.fillText(currentMission.toUpperCase(), textCenter, textBaseY + 25);
-            }
-
-            // Divisor
-            ctx.strokeStyle = "#FACC15"; // Amarelo Brand
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.moveTo(textCenter - 60, textBaseY + 100);
-            ctx.lineTo(textCenter + 60, textBaseY + 100);
-            ctx.stroke();
-
-            // Branding Família Eliel
-            ctx.fillStyle = "#1f2937";
-            ctx.font = "bold 40px 'Montserrat'";
-            ctx.fillText("FAMÍLIA ELIEL 2025", textCenter, textBaseY + 170);
-
-            // Data
-            ctx.fillStyle = "#9ca3af";
-            ctx.font = "28px 'Montserrat'";
-            ctx.fillText(new Date().toLocaleDateString('pt-BR'), textCenter, textBaseY + 220);
+            ctx.fillStyle = "#FACC15"; ctx.font = "bold 32px 'Montserrat'"; ctx.fillText("FAMÍLIA ELIEL 2025", size / 2, size + 110);
+            ctx.fillStyle = "#9ca3af"; ctx.font = "24px 'Montserrat'"; ctx.fillText(new Date().toLocaleDateString('pt-BR'), size / 2, canvas.height - 40);
 
             // Atualiza UI
             const finalData = canvas.toDataURL('image/jpeg', 0.9);
@@ -413,26 +377,11 @@
             upCanvas.height = canvas.height * scale;
             const upCtx = upCanvas.getContext('2d');
             upCtx.drawImage(canvas, 0, 0, upCanvas.width, upCanvas.height);
-            const lowResData = upCanvas.toDataURL('image/jpeg', 0.7);
+            const lowResData = upCanvas.toDataURL('image/jpeg', 0.6);
 
             if (window.saveToFirestore) {
                 window.saveToFirestore(lowResData, currentMission);
             }
-        }
-
-        // Helper para retângulo arredondado
-        function roundRect(ctx, x, y, width, height, radius) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
         }
 
         function downloadImage() {
