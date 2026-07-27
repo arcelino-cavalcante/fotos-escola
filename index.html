@@ -1,397 +1,76 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Desafio Fotográfico</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Nothing+You+Could+Do&display=swap"
-        rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #111827;
-        }
-
-        .handwritten {
-            font-family: 'Nothing You Could Do', cursive;
-        }
-
-        ::-webkit-scrollbar {
-            display: none;
-        }
-
-        @keyframes flash {
-            0% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-
-        .camera-flash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            z-index: 50;
-            pointer-events: none;
-            animation: flash 0.3s ease-out forwards;
-        }
-
-        @keyframes countdown-pulse {
-            0% {
-                transform: scale(0.5);
-                opacity: 0;
-            }
-
-            50% {
-                transform: scale(1.2);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 0;
-            }
-        }
-
-        .count-number {
-            animation: countdown-pulse 0.9s infinite;
-        }
-    </style>
-</head>
-
-<body
-    class="bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 min-h-screen flex flex-col items-center justify-center p-4 text-white">
-
-    <div id="flash-overlay" class="hidden"></div>
-
-    <div class="w-full max-w-md mx-auto relative">
-        <!-- LOGO -->
-        <div class="text-center mb-6 animate-fade-in">
-            <div
-                class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400 text-purple-900 mb-3 shadow-lg border-4 border-white">
-                <i class="fas fa-camera text-3xl"></i>
-            </div>
-            <h1 class="text-2xl font-bold tracking-wider">MOMENTOS <span class="text-yellow-400">ESCOLA</span></h1>
-            <p class="text-sm text-yellow-400 font-bold uppercase tracking-widest mt-1">Família Eliel 2025</p>
-        </div>
-
-        <!-- TELA 1: INTRO -->
-        <div id="screen-intro"
-            class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center border border-white/20 shadow-2xl">
-            <h2 class="text-xl font-bold mb-4">Pronto para o desafio?</h2>
-            <p class="text-gray-300 mb-8 text-sm leading-relaxed">
-                Sua foto aparecerá automaticamente no <strong>Telão do Evento</strong>!
-            </p>
-            <button onclick="startChallenge()"
-                class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 hover:shadow-yellow-400/50 flex items-center justify-center gap-2">
-                <i class="fas fa-dice"></i> SORTEAR MISSÃO
-            </button>
-
-            <!-- Recent Gallery Preview -->
-            <div class="mt-8">
-                <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest">Últimos Momentos</p>
-                <div id="recent-gallery" class="flex gap-2 overflow-x-auto pb-2 snap-x">
-                    <!-- Gallery Items injected here -->
-                    <div
-                        class="w-16 h-16 bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-xs text-gray-500">
-                        ...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TELA 2: MISSÃO -->
-        <div id="screen-mission"
-            class="hidden bg-white/10 backdrop-blur-lg rounded-3xl p-8 text-center border border-white/20 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500">
-            </div>
-            <span class="text-xs font-bold text-yellow-400 uppercase tracking-widest">Sua Missão:</span>
-            <h3 id="mission-text"
-                class="text-2xl md:text-3xl font-extrabold my-8 text-white leading-tight filter drop-shadow-lg"></h3>
-            <button onclick="openCamera()"
-                class="w-full bg-white text-indigo-900 font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 hover:bg-gray-100 flex items-center justify-center gap-2">
-                <i class="fas fa-camera-retro"></i> ABRIR CÂMERA
-            </button>
-            <button onclick="startChallenge()" class="mt-4 text-sm text-gray-400 underline hover:text-white">Trocar
-                Missão</button>
-        </div>
-
-        <!-- TELA 3: CÂMERA (Instagram Style) -->
-        <div id="screen-camera" class="hidden fixed inset-0 z-50 bg-black">
-            <!-- Video Fullscreen -->
-            <video id="video" autoplay playsinline
-                class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
-
-            <!-- Top Controls -->
-            <div
-                class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20 bg-gradient-to-b from-black/50 to-transparent">
-                <button onclick="closeCamera()" class="text-white text-2xl drop-shadow-lg p-2">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="flex gap-4">
-                    <!-- Flash placeholder or other top controls could go here -->
-                    <button class="text-white text-xl drop-shadow-lg p-2 opacity-50">
-                        <i class="fas fa-bolt"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Countdown Overlay -->
-            <div id="countdown-overlay"
-                class="hidden absolute inset-0 flex items-center justify-center bg-black/40 z-30">
-                <span id="countdown-text" class="text-9xl font-bold text-white drop-shadow-lg count-number">3</span>
-            </div>
-
-            <!-- Bottom Controls -->
-            <div
-                class="absolute bottom-0 left-0 w-full pb-12 pt-20 px-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20 flex justify-between items-center">
-
-                <!-- Gallery/Previous (Placeholder for balance) -->
-                <div class="w-12 h-12 rounded-lg bg-white/20 border border-white/30 overflow-hidden">
-                    <!-- Could show last photo here -->
-                </div>
-
-                <!-- Shutter Button -->
-                <button onclick="startCountdown()"
-                    class="relative w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-90">
-                    <div class="w-16 h-16 rounded-full bg-white transition-all active:bg-gray-200"></div>
-                </button>
-
-                <!-- Switch Camera -->
-                <button onclick="switchCamera()"
-                    class="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-xl border border-white/20 active:bg-white/20 transition">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- TELA 4: RESULTADO -->
-        <div id="screen-result" class="hidden flex flex-col items-center w-full">
-            <p id="upload-status" class="text-green-400 font-bold mb-4 flex items-center gap-2 animate-bounce">
-                <i class="fas fa-check-circle"></i> Enviando para o telão...
-            </p>
-
-            <div class="flex gap-2 mb-4">
-                <button onclick="applyFilter('normal')"
-                    class="px-3 py-1 text-xs rounded-full bg-white text-gray-800 font-bold border hover:bg-gray-200">Normal</button>
-                <button onclick="applyFilter('grayscale')"
-                    class="px-3 py-1 text-xs rounded-full bg-gray-600 text-white font-bold border hover:bg-gray-700">P&B</button>
-                <button onclick="applyFilter('sepia')"
-                    class="px-3 py-1 text-xs rounded-full bg-yellow-700 text-white font-bold border hover:bg-yellow-800">Sépia</button>
-            </div>
-
-            <canvas id="photoCanvas" class="hidden"></canvas>
-            <canvas id="uploadCanvas" class="hidden"></canvas> <!-- Canvas menor para upload -->
-
-            <img id="finalImage"
-                class="w-full max-w-sm rounded shadow-2xl rotate-1 transform transition hover:rotate-0 duration-300 border-8 border-white"
-                alt="Sua foto">
-
-            <div class="grid grid-cols-2 gap-4 w-full mt-6">
-                <button onclick="downloadImage()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg">
-                    <i class="fas fa-download"></i> Baixar
-                </button>
-                <button onclick="shareImage()"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg">
-                    <i class="fab fa-whatsapp"></i> Enviar
-                </button>
-            </div>
-            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white flex items-center gap-2 text-sm"><i
-                    class="fas fa-redo"></i> Nova Missão</button>
-        </div>
-    </div>
-
-    <!-- Firebase Script -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBIxNGXEYA4AU8Kl3ktCO4mZ3dC4zxkU1s",
-            authDomain: "formes-993cb.firebaseapp.com",
-            projectId: "formes-993cb",
-            storageBucket: "formes-993cb.firebasestorage.app",
-            messagingSenderId: "68887552550",
-            appId: "1:68887552550:web:efb79cce5416cb758f3ce7"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Tornar funções acessíveis globalmente
-        window.saveToFirestore = async (base64Image, missionText) => {
-            const statusEl = document.getElementById('upload-status');
-            try {
-                if (!auth.currentUser) await signInAnonymously(auth);
-
-                await addDoc(collection(db, "school_gallery"), {
-                    image: base64Image,
-                    mission: missionText,
-                    timestamp: serverTimestamp()
-                });
-
-                statusEl.innerHTML = '<i class="fas fa-check-double"></i> Sucesso! Está no telão.';
-            } catch (error) {
-                console.error("Erro upload", error);
-                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Salvo apenas no celular.';
-            }
-        };
-
-        // Load Recent Gallery
-        const q = query(collection(db, "school_gallery"), orderBy("timestamp", "desc"), limit(10));
-        onSnapshot(q, (snapshot) => {
-            const galleryEl = document.getElementById('recent-gallery');
-            galleryEl.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const img = document.createElement('img');
-                img.src = data.image;
-                img.className = 'w-16 h-16 rounded-lg object-cover border border-white/20 flex-shrink-0';
-                galleryEl.appendChild(img);
-            });
-        });
-    </script>
-
-    <script>
-        // --- DADOS E FUNÇÕES DE UI ---
-        const missoes = [
-            "Fazendo careta", "Abraçando alguém bonito(a)", "Com a gestão", "Com a coordenação", "Com algum funcionário",
-            "Com uma pessoa legal", "Com alguém que sabe pedir", "Com alguém sério", "Com mais de 2 pessoas", "Fazendo cara de moral",
-            "Fazendo pose de modelo", "Sorrindo muito", "Sinal de paz e amor", "Foto pulando", "Mão no coração",
-            "Com seu melhor amigo(a)", "Apontando pro céu", "Imitando uma estátua", "Fazendo biquinho", "Com alguém de óculos",
-            "Com alguém mais alto", "Com alguém mais baixo", "Coração com as mãos", "Com a turma toda", "Selfie estilosa",
-            "Com cara de surpresa", "Mostrando a língua", "De costas", "Com alguém que admira", "Dando um toca aqui",
-            "Fazendo chifrinho", "Com cara de pensativo", "Segurando algo escolar", "Com alguém rindo", "Fazendo careta feia",
-            "Com cara de sono", "Comemorando muito", "Com outra turma", "Fazendo joinha", "Foto espontânea"
-        ];
-        let currentMission = "", videoStream = null, currentFacingMode = 'user', capturedImageBitmap = null, currentFilter = 'normal';
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playBeep(f = 800, d = 0.1) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-            o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination);
-            o.start(); g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
-        }
-        function playShutter() { playBeep(100, 0.05); }
-
-        function showScreen(id) { ['screen-intro', 'screen-mission', 'screen-camera', 'screen-result'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-        function startChallenge() { currentMission = missoes[Math.floor(Math.random() * missoes.length)]; document.getElementById('mission-text').innerText = `"${currentMission}"`; showScreen('screen-mission'); }
-
-        async function openCamera() {
-            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 1280 } } });
-                const video = document.getElementById('video');
-                video.srcObject = videoStream;
-                video.style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
-                showScreen('screen-camera');
-            } catch (e) { alert("Erro câmera: " + e.message); }
-        }
-        function switchCamera() { currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; openCamera(); }
-        function closeCamera() { if (videoStream) videoStream.getTracks().forEach(t => t.stop()); showScreen('screen-mission'); }
-
-
-
-        function startCountdown() {
-            document.getElementById('countdown-overlay').classList.remove('hidden');
-            let c = 3; document.getElementById('countdown-text').innerText = c; playBeep(600);
-            const t = setInterval(() => { c--; if (c > 0) { document.getElementById('countdown-text').innerText = c; playBeep(600); } else { clearInterval(t); document.getElementById('countdown-overlay').classList.add('hidden'); takePhoto(); } }, 1000);
-        }
-
-        async function takePhoto() {
-            playShutter();
-            const video = document.getElementById('video');
-            const cvs = document.createElement('canvas');
-            cvs.width = video.videoWidth; cvs.height = video.videoHeight;
-            const ctx = cvs.getContext('2d');
-            if (currentFacingMode === 'user') { ctx.translate(cvs.width, 0); ctx.scale(-1, 1); }
-            ctx.drawImage(video, 0, 0);
-
-
-
-            capturedImageBitmap = cvs;
-            renderFinalImage();
-            closeCamera();
-            showScreen('screen-result');
-        }
-
-        function applyFilter(f) { currentFilter = f; renderFinalImage(); }
-
-        function renderFinalImage() {
-            if (!capturedImageBitmap) return;
-            const canvas = document.getElementById('photoCanvas');
-            const ctx = canvas.getContext('2d');
-            const size = 1080; const bottom = 300;
-            canvas.width = size; canvas.height = size + bottom;
-
-            // Fundo Branco
-            ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Imagem
-            const m = 40; const pSize = size - m * 2;
-            const srcW = capturedImageBitmap.width, srcH = capturedImageBitmap.height;
-            const min = Math.min(srcW, srcH);
-            const sx = (srcW - min) / 2, sy = (srcH - min) / 2;
-
-            ctx.save();
-            if (currentFilter === 'grayscale') ctx.filter = 'grayscale(1)';
-            else if (currentFilter === 'sepia') ctx.filter = 'sepia(0.8)';
-            ctx.drawImage(capturedImageBitmap, sx, sy, min, min, m, m, pSize, pSize);
-            ctx.restore();
-
-            // Textos
-            ctx.fillStyle = "#1f2937"; ctx.font = "bold 36px 'Montserrat'"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(currentMission.toUpperCase(), size / 2, size + 60);
-
-
-
-            ctx.fillStyle = "#FACC15"; ctx.font = "bold 32px 'Montserrat'"; ctx.fillText("FAMÍLIA ELIEL 2025", size / 2, size + 110);
-            ctx.fillStyle = "#9ca3af"; ctx.font = "24px 'Montserrat'"; ctx.fillText(new Date().toLocaleDateString('pt-BR'), size / 2, canvas.height - 40);
-
-            // Atualiza UI
-            const finalData = canvas.toDataURL('image/jpeg', 0.9);
-            document.getElementById('finalImage').src = finalData;
-
-            // --- OTIMIZAÇÃO E UPLOAD AUTOMÁTICO ---
-            const upCanvas = document.getElementById('uploadCanvas');
-            const scale = 600 / canvas.width;
-            upCanvas.width = 600;
-            upCanvas.height = canvas.height * scale;
-            const upCtx = upCanvas.getContext('2d');
-            upCtx.drawImage(canvas, 0, 0, upCanvas.width, upCanvas.height);
-            const lowResData = upCanvas.toDataURL('image/jpeg', 0.6);
-
-            if (window.saveToFirestore) {
-                window.saveToFirestore(lowResData, currentMission);
-            }
-        }
-
-        function downloadImage() {
-            const a = document.createElement('a'); a.download = `momento-${Date.now()}.jpg`; a.href = document.getElementById('finalImage').src; a.click();
-        }
-        function shareImage() {
-            alert("Use o botão baixar e compartilhe manualmente!");
-        }
-        function resetApp() { showScreen('screen-intro'); }
-    </script>
-</body>
-
-</html>
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#071d2b"><title>Tempo & Propósito — Liel Peixoto</title>
+<link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+body{overflow-x:hidden}.shell{width:min(100%,520px);margin:auto;min-height:100dvh;padding:22px 18px 32px;display:flex;flex-direction:column}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:auto}.step{margin-top:28px}.hero{padding:34px 25px;border-radius:30px;position:relative;overflow:hidden}.hero:before{content:"";position:absolute;width:160px;height:160px;border:1px solid rgba(233,174,59,.3);border-radius:50%;right:-65px;top:-70px;box-shadow:0 0 0 24px rgba(233,174,59,.05),0 0 0 48px rgba(233,174,59,.04)}h1{font-size:clamp(2.5rem,10vw,4rem);line-height:.95;margin:.7rem 0 1rem;letter-spacing:-.04em}.lead{color:#c4d1cf;line-height:1.6;margin-bottom:1.8rem}.full{width:100%}.recent{margin-top:24px}.recent-row{display:flex;gap:9px;overflow:auto;padding-bottom:5px}.recent-row img{width:68px;height:68px;object-fit:cover;border-radius:14px;border:2px solid rgba(255,255,255,.12)}.mission{padding:32px 24px;text-align:center;border-radius:30px}.mission-icon{width:70px;height:70px;margin:auto;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;font-size:1.7rem}.mission h2{font-size:2rem;margin:1.4rem 0 1.7rem}.field{text-align:left;margin:18px 0}.field label{display:block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}.field input,.field select{width:100%;border:1px solid #ffffff2c;background:#ffffff12;color:#fff;padding:14px;border-radius:13px;outline:none}.field select option{color:#102a35}.camera{position:fixed;inset:0;z-index:20;background:#000}.camera video{width:100%;height:100%;object-fit:cover}.camera-top,.camera-bottom{position:absolute;left:0;width:100%;display:flex;align-items:center;justify-content:space-between;padding:25px;z-index:2}.camera-top{top:0;background:linear-gradient(#0009,transparent)}.camera-bottom{bottom:0;padding-bottom:42px;background:linear-gradient(transparent,#000b)}.circle-btn{border:0;color:white;background:#ffffff24;width:48px;height:48px;border-radius:50%;font-size:1.2rem}.shutter{width:82px;height:82px;border-radius:50%;border:5px solid white;background:#ffffff40;box-shadow:inset 0 0 0 7px #fff}.countdown{position:absolute;inset:0;display:grid;place-items:center;background:#0007;font-size:8rem;font-weight:700;z-index:3}.result{padding-bottom:20px}.status{text-align:center;color:#f4c867;font-size:.85rem;margin:12px}.postcard{background:var(--paper);padding:11px 11px 18px;border-radius:5px;box-shadow:0 25px 60px #0009;transform:rotate(-1deg)}.postcard img{display:block;width:100%;border-radius:2px}.scene-picker{display:flex;gap:7px;overflow:auto;margin:18px 0}.scene-picker button{white-space:nowrap}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.note{text-align:center;color:var(--muted);font-size:.76rem;margin-top:14px}
+</style></head>
+<body class="page-bg grain"><main class="shell">
+<header class="top"><div class="brand"><div class="brand-mark"><i class="fa-regular fa-clock"></i></div><div><strong>Liel Peixoto</strong><small>2026 · segundo semestre</small></div></div><span class="chip"><i class="fa-solid fa-location-arrow"></i> Em jornada</span></header>
+<section id="intro" class="step hero glass"><span class="eyebrow">Tempo & Propósito</span><h1 class="serif">O futuro começa<br>neste instante.</h1><p class="lead">Registre quem faz a educação acontecer. Sua foto embarca agora e aparece no telão da escola.</p><button class="btn btn-primary full" onclick="drawMission()"><i class="fa-solid fa-compass"></i> Descobrir meu destino</button><div class="recent"><span class="eyebrow">Últimos embarques</span><div id="recent" class="recent-row" style="margin-top:10px"></div></div></section>
+<section id="mission" class="step mission glass hidden"><div class="mission-icon"><i class="fa-solid fa-route"></i></div><p class="eyebrow">Seu propósito agora</p><h2 id="missionText" class="serif"></h2><button class="btn btn-light full" onclick="openCamera()"><i class="fa-solid fa-camera"></i> Abrir câmera</button><button class="btn btn-ghost full" style="margin-top:10px" onclick="drawMission()">Sortear outro</button></section>
+<section id="camera" class="camera hidden"><video id="video" autoplay playsinline></video><div class="camera-top"><button class="circle-btn" onclick="closeCamera()"><i class="fa-solid fa-xmark"></i></button><span class="chip">Olhe para o seu próximo capítulo</span><span></span></div><div id="countdown" class="countdown hidden">3</div><div class="camera-bottom"><span></span><button class="shutter" aria-label="Tirar foto" onclick="startCountdown()"></button><button class="circle-btn" onclick="switchCamera()"><i class="fa-solid fa-rotate"></i></button></div></section>
+<section id="result" class="step result hidden"><p id="status" class="status"><i class="fa-solid fa-spinner fa-spin"></i> Enviando para aprovação...</p><div class="postcard"><img id="finalImage" alt="Sua foto temática"></div><div class="scene-picker"><button class="btn btn-ghost" onclick="changeScene('train')">🚂 Trem do tempo</button><button class="btn btn-ghost" onclick="changeScene('plane')">✈️ Avião do futuro</button><button class="btn btn-ghost" onclick="changeScene('portal')">⏳ Portal 2026</button></div><div class="actions"><button class="btn btn-light" onclick="downloadImage()"><i class="fa-solid fa-download"></i> Baixar</button><button class="btn btn-primary" onclick="shareImage()"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button></div><button class="btn btn-ghost full" style="margin-top:10px" onclick="resetApp()">Nova jornada</button><p class="note">Após a aprovação da organização, seu momento ganhará uma entrada especial no telão.</p></section>
+<canvas id="canvas" class="hidden"></canvas></main>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";import{getFirestore,collection,addDoc,serverTimestamp,query,orderBy,limit,onSnapshot}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";import{getAuth,signInAnonymously}from"https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+const config={apiKey:"AIzaSyBIxNGXEYA4AU8Kl3ktCO4mZ3dC4zxkU1s",authDomain:"formes-993cb.firebaseapp.com",projectId:"formes-993cb",storageBucket:"formes-993cb.firebasestorage.app",messagingSenderId:"68887552550",appId:"1:68887552550:web:efb79cce5416cb758f3ce7"},app=initializeApp(config),db=getFirestore(app),auth=getAuth(app);
+const statusEl=document.getElementById("status"),recentEl=document.getElementById("recent");window.uploadPhoto=async(image,mission,scene,name,purpose)=>{try{if(!auth.currentUser)await signInAnonymously(auth);await addDoc(collection(db,"school_gallery"),{image,mission,scene,name,purpose,approved:false,event:"tempo-proposito-2026-2",timestamp:serverTimestamp()});statusEl.innerHTML='<i class="fa-solid fa-hourglass-half"></i> Foto recebida! Aguardando aprovação para o telão.'}catch(e){console.error(e);statusEl.innerHTML='<i class="fa-solid fa-triangle-exclamation"></i> Não foi possível enviar; você ainda pode baixar.'}};
+onSnapshot(query(collection(db,"school_gallery"),orderBy("timestamp","desc"),limit(12)),s=>{recentEl.innerHTML="";s.docs.map(d=>d.data()).filter(p=>p.approved!==false).slice(0,8).forEach(p=>{const i=new Image;i.src=p.image;recentEl.append(i)})});
+</script>
+<script>
+const missions=[
+"Fazendo uma careta atemporal",
+"Dando um sorriso que faz o tempo parar",
+"Com quem mais come na hora do intervalo",
+"Com alguém da gestão",
+"Com alguém da coordenação",
+"Com um funcionário da escola",
+"Com o professor mais pontual da escola",
+"Com quem sempre chega correndo",
+"Com alguém que inspira você",
+"Com quem transforma desafios em caminhos",
+"Com um professor que deixou sua marca",
+"Apontando para o próximo destino",
+"Com a equipe que faz o presente acontecer",
+"Celebrando uma conquista deste semestre",
+"Com alguém que caminha ao seu lado",
+"Fazendo pose de quem acabou de chegar ao futuro",
+"Reunindo pessoas com o mesmo propósito",
+"Com quem sempre tem uma história para contar",
+"Com alguém que merece viajar no tempo com você",
+"Imitando uma fotografia do passado",
+"Fazendo pose de capa do ano 2050",
+"Com quem nunca perde a hora do café",
+"Com a pessoa mais animada da escola",
+"Com quem faz todo mundo rir",
+"Com alguém que torna o dia mais leve",
+"Fazendo cara de quem descobriu o futuro",
+"Com quem você levaria numa viagem de trem",
+"Com quem você levaria num avião para o futuro",
+"Formando um relógio com as mãos",
+"Congelados no tempo como estátuas",
+"Fazendo uma pose que nunca sai de moda",
+"Com quem sempre salva o dia",
+"Com alguém que faz a escola acontecer",
+"Com o grupo mais barulhento do corredor",
+"Com quem tem energia para dois semestres",
+"Recriando uma cena de viagem no tempo",
+"Com quem compartilha conhecimento e café",
+"Fazendo cara de segunda-feira em câmera lenta",
+"Com quem merece um minuto de aplausos",
+"Celebrando o agora como se fosse histórico"
+];
+let mission="",stream=null,facing="user",raw=null,scene=["train","plane","portal"][Math.floor(Math.random()*3)],uploaded=false;
+const $=id=>document.getElementById(id),screens=["intro","mission","camera","result"];function show(id){screens.forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function drawMission(){mission=missions[Math.floor(Math.random()*missions.length)];$("missionText").textContent=mission;show("mission")}window.drawMission=drawMission;
+async function openCamera(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:1440},height:{ideal:1440}}});$("video").srcObject=stream;$("video").style.transform=facing==="user"?"scaleX(-1)":"none";show("camera")}catch(e){alert("Não foi possível abrir a câmera: "+e.message)}}window.openCamera=openCamera;
+function closeCamera(){if(stream)stream.getTracks().forEach(t=>t.stop());show("mission")}window.closeCamera=closeCamera;function switchCamera(){facing=facing==="user"?"environment":"user";openCamera()}window.switchCamera=switchCamera;
+function startCountdown(){let n=3;$("countdown").classList.remove("hidden");$("countdown").textContent=n;const t=setInterval(()=>{n--;if(n)$("countdown").textContent=n;else{clearInterval(t);$("countdown").classList.add("hidden");capture()}},800)}window.startCountdown=startCountdown;
+function capture(){const v=$("video"),c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext("2d");if(facing==="user"){x.translate(c.width,0);x.scale(-1,1)}x.drawImage(v,0,0);raw=c;if(stream)stream.getTracks().forEach(t=>t.stop());render(true);show("result")}
+function roundRect(x,a,b,c,d,r){x.beginPath();x.roundRect(a,b,c,d,r);x.fill()}
+function render(first=false){if(!raw)return;const c=$("canvas"),x=c.getContext("2d"),W=1080,H=1350;c.width=W;c.height=H;x.fillStyle="#f7edda";x.fillRect(0,0,W,H);let g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#0a3343");g.addColorStop(1,scene==="plane"?"#287b7c":scene==="portal"?"#7a3c2b":"#071d2b");x.fillStyle=g;x.fillRect(30,30,W-60,H-60);x.save();x.beginPath();x.roundRect(70,120,940,940,28);x.clip();const s=Math.min(raw.width,raw.height),sx=(raw.width-s)/2,sy=(raw.height-s)/2;x.drawImage(raw,sx,sy,s,s,70,120,940,940);x.restore();x.fillStyle="#e9ae3b";x.fillRect(70,1060,940,8);x.fillStyle="#fffaf0";x.textAlign="center";x.font="700 48px Georgia";x.fillText(mission,W/2,1145,860);x.font="700 26px Arial";x.fillStyle="#e9ae3b";x.fillText("TEMPO & PROPÓSITO  •  LIEL PEIXOTO  •  2026.2",W/2,1205);
+ x.strokeStyle="#e9ae3b";x.lineWidth=8;x.fillStyle="#e9ae3b";if(scene==="train"){x.font="68px Arial";x.fillText("🚂",140,100);x.setLineDash([12,16]);x.beginPath();x.moveTo(190,80);x.bezierCurveTo(400,20,650,130,900,65);x.stroke()}else if(scene==="plane"){x.font="70px Arial";x.fillText("✈",900,100);x.setLineDash([10,15]);x.beginPath();x.moveTo(120,70);x.bezierCurveTo(350,150,600,5,860,80);x.stroke()}else{x.beginPath();x.arc(540,590,455,0,Math.PI*2);x.stroke();x.beginPath();x.arc(540,590,430,0,Math.PI*2);x.stroke()}
+const data=c.toDataURL("image/jpeg",.88);$("finalImage").src=data;if(first&&!uploaded){uploaded=true;const up=document.createElement("canvas");up.width=600;up.height=750;up.getContext("2d").drawImage(c,0,0,600,750);setTimeout(()=>window.uploadPhoto?.(up.toDataURL("image/jpeg",.68),mission,scene,"",""),400)}}function changeScene(s){scene=s;render(false)}window.changeScene=changeScene;
+function downloadImage(){const a=document.createElement("a");a.download=`liel-peixoto-${Date.now()}.jpg`;a.href=$("finalImage").src;a.click()}window.downloadImage=downloadImage;async function shareImage(){try{const b=await(await fetch($("finalImage").src)).blob(),f=new File([b],"tempo-e-proposito.jpg",{type:"image/jpeg"});if(navigator.canShare?.({files:[f]}))await navigator.share({title:"Tempo & Propósito",files:[f]});else downloadImage()}catch{downloadImage()}}window.shareImage=shareImage;function resetApp(){raw=null;uploaded=false;scene=["train","plane","portal"][Math.floor(Math.random()*3)];show("intro")}window.resetApp=resetApp;
+</script></body></html>
